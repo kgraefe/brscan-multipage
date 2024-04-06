@@ -100,7 +100,7 @@ def advertise(args):
             [
                 "TYPE=BR",
                 "BUTTON=SCAN",
-                f"USER={appnum}: {function.name}", # the menu sorts alphabetically
+                f"USER={appnum}: {function.name}",  # the menu sorts alphabetically
                 "FUNC=FILE",
                 f"HOST={args.listen_addr}:{COMMAND_UDP_PORT}",
                 f"APPNUM={idx + 1}",
