@@ -94,6 +94,8 @@ def advertise(args):
 
     print(f"Sending advertisements to {args.scanner_addr}")
 
+    host = args.advertised_host or args.listen_addr
+
     for idx, function in enumerate(FUNCTIONS):
         appnum = idx + 1
         cmdstr = ";".join(
@@ -102,7 +104,7 @@ def advertise(args):
                 "BUTTON=SCAN",
                 f"USER={appnum}: {function.name}",  # the menu sorts alphabetically
                 "FUNC=FILE",
-                f"HOST={args.listen_addr}:{COMMAND_UDP_PORT}",
+                f"HOST={host}:{COMMAND_UDP_PORT}",
                 f"APPNUM={idx + 1}",
                 f"DURATION={ADVERTISE_INTERVAL * 3}",
                 "BRID=",
@@ -169,6 +171,15 @@ receive_command.last_seq = None
 def main():
     parser = argparse.ArgumentParser(description="brscan with multipage support")
     parser.add_argument("-d", "--device", type=str, help="scanner device")
+    parser.add_argument(
+        "-a",
+        "--advertised-host",
+        type=str,
+        help="""
+            Host IP address that should be advertised to the scanner. This defaults to
+            listen_addr but might be different in NATed or containered environments.
+            """,
+    )
     parser.add_argument("scanner_addr", type=str, help="IP address or DNS entry of printer")
     parser.add_argument("listen_addr", type=str, help="local IP address or DNS entry")
     parser.add_argument("output_dir", type=str, help="output directory")
