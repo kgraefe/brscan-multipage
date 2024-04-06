@@ -13,6 +13,7 @@ from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp.proto import rfc1902
 
 SNMP_UDP_PORT = 161
+COMMAND_UDP_PORT = 54925  # Brother expects this and nothing else
 ADVERTISE_INTERVAL = 30
 RESOLUTION = 200
 RETRIES = 2
@@ -101,7 +102,7 @@ def advertise(args):
                 "BUTTON=SCAN",
                 f"USER={appnum}: {function.name}", # the menu sorts alphabetically
                 "FUNC=FILE",
-                f"HOST={args.listen_addr}:{args.listen_port}",
+                f"HOST={args.listen_addr}:{COMMAND_UDP_PORT}",
                 f"APPNUM={idx + 1}",
                 f"DURATION={ADVERTISE_INTERVAL * 3}",
                 "BRID=",
@@ -170,12 +171,11 @@ def main():
     parser.add_argument("-d", "--device", type=str, help="scanner device")
     parser.add_argument("scanner_addr", type=str, help="IP address or DNS entry of printer")
     parser.add_argument("listen_addr", type=str, help="local IP address or DNS entry")
-    parser.add_argument("listen_port", type=int, help="local listen UDP port or DNS entry")
     parser.add_argument("output_dir", type=str, help="output directory")
     args = parser.parse_args()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((args.listen_addr, args.listen_port))
+    sock.bind((args.listen_addr, COMMAND_UDP_PORT))
 
     advertise(args)
     next_ad = time.monotonic() + ADVERTISE_INTERVAL
