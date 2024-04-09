@@ -40,6 +40,7 @@ It uses the following environment variables:
 - `HOST_IP` (required): the IP address of the host running `brscan-multipage`
 - `USERMAP_UID` and `USERMAP_GID` (optional, root containers only): user and
   group mapping to fix file permissions
+- `TZ` (optional): the local timezone for proper timestamps in the filenames
 
 It exposes the UDP port `54925` which *must be mapped to the very same port* on
 the host. Otherwise the scanner won't reach the container when a menu entry is
@@ -57,6 +58,7 @@ $ docker run \
     --env "HOST_IP=192.168.178.26" \
     --env "USERMAP_UID=$(id -u)" \
     --env "USERMAP_GID=$(id -g)" \
+    --env "TZ=Europe/Berlin" \
     --publish "54925:54925/UDP" \
     --volume "$PWD/output:/output"
     kgraefe/brscan-multipage:latest
@@ -65,22 +67,22 @@ $ docker run \
 #### Docker compose example
 ```yml
 --
-version: "3"
+version: "3.4"
 services:
   brscan-multipage:
     image: kgraefe/brscan-multipage:latest
-    container_name: brscan-multipage
-    hostname: my-brscan-multipage
-    environment:
-      - SCANNER_MODEL=DCP-7070DW
-      - SCANNER_IP=192.168.178.40
-      - HOST_IP=192.168.178.26
-      - USERMAP_UID=1000
-      - USERMAP_GID=1000
-    volumes:
-      - /wherever/paperless/consume:/output
+    restart: unless-stopped
     ports:
       - 54925:54925/udp
+    environment:
+      SCANNER_MODEL: DCP-7070DW
+      SCANNER_IP: 192.168.178.40
+      HOST_IP: 192.168.178.26
+      USERMAP_UID: 1000
+      USERMAP_GID: 1000
+      TZ: Europe/Berlin
+    volumes:
+      - /wherever/paperless/consume:/output
     restart: unless-stopped
 ```
 
