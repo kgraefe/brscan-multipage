@@ -1,11 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-set -x
-set -u
+set -eux
 
-brsaneconfig4 -a name="Brother" model="$SCANNER_MODEL" ip="$SCANNER_IP"
-
-mkdir -p /output
 python brscan_multipage.py \
     --device "brother4:net1;dev0" \
     --advertised-host "$HOST_IP" \

@@ -5,7 +5,7 @@ MAINTAINER Konrad Gräfe, kg@paktolos.net
 EXPOSE 54925/udp
 
 RUN apt-get update -q \
-    && apt-get install -q -y sane-utils imagemagick \
+    && apt-get install -q -y sane-utils imagemagick gosu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,14 +20,22 @@ RUN sed -i '/rights="none" pattern="PDF"/d' /etc/ImageMagick-6/policy.xml
 # Remove all the other sane.d drivers to improve startup time
 RUN echo "brother4" > /etc/sane.d/dll.conf \
     && rm /etc/sane.d/dll.d/*
+
+# Add user to run rootless
+RUN set -eux \
+    && addgroup --gid 1000 brscan \
+    && useradd --uid 1000 --gid brscan --shell /bin/bash brscan
     
 WORKDIR /brscan-multipage
 COPY --from=projectroot requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY --from=projectroot \
+    containers/entrypoint.sh \
     containers/run.sh \
     brscan_multipage.py \
     .
 
-CMD ./run.sh
+ENTRYPOINT ["./entrypoint.sh"]
+
+CMD ["./run.sh"]
