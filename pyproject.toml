@@ -1,2 +1,15 @@
-[tool.black]
-line-length = 100
+[project]
+name = "brscan-multipage"
+version = "0.1.0"
+description = "Scan multipage documents with your Brother scanner's hardware buttons"
+authors = [
+    { name = "Konrad Vité", email = "kvite@paktolos.net" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "*"
+black = "*"
+flake8-bugbear = "^24.12.12"

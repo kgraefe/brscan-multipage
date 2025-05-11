@@ -89,9 +89,8 @@ services:
 ### Python environment
 To run outside the container please refer to the help text of the script:
 ```sh
-$ virtualenv venv
-$ . ./venv/bin/activate
-$ pip install -r requirements.txt
+$ poetry install
+$ . ./.venv/bin/activate
 $ ./brscan_multipage.py --help
 ...
 ```
