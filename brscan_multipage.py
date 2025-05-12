@@ -1,17 +1,151 @@
 #!/usr/bin/env python
 
+import os
 import asyncio
+import datetime
 import argparse
 import colorlog
+import wand.image
 import pysnmp.hlapi.v1arch.asyncio as snmp
 
 SNMP_UDP_PORT: int = 161
 COMMAND_UDP_PORT: int = 54925  # Brother expects this and nothing else
 ADVERTISE_INTERVAL: int = 30
-RESOLUTION = 200
-RETRIES = 2
+RESOLUTION: int = 200
 
 log = colorlog.getLogger("brscan_multipage")
+
+
+class Scanner:
+    def __init__(self, output_dir: str | os.PathLike, device: str | None):
+        self._queue = asyncio.Queue(maxsize=10)
+        self._document = wand.image.Image()
+        self._output_dir = output_dir
+        self._device = device
+
+    def enqueue(self, appnum: int):
+        try:
+            self._queue.put_nowait(appnum)
+        except asyncio.QueueFull as e:
+            self.warning(f"Dropping appnum command {appnum}: {e}")
+
+    async def process(self):
+        while True:
+            appnum = await self._queue.get()
+
+            # appnum must match the appnum in the advertisement (array index + 1)
+            match appnum:
+                case 1:
+                    log.info("Scanning multi page")
+                    await self._scan_multipage()
+                case 2:
+                    log.info("Scanning last page")
+                    await self._scan_last_page()
+                case 3:
+                    log.info("Finishing multi page")
+                    await self._finish_multipage()
+                case 4:
+                    log.info("Aborting multi page")
+                    await self._abort_multipage()
+                case _:
+                    log.warning(f"Ignoring unknown appnum {appnum}")
+
+    async def _scan_page(self, dummy: bool = False):
+        # fmt: off
+        cmd = [
+            "scanimage",
+            "--resolution", f"{RESOLUTION}",
+            "-x", "1" if dummy else "210",
+            "-y", "1" if dummy else "297",
+            "--format", "jpeg",
+        ]
+        # fmt: on
+
+        if self._device is not None:
+            cmd += ["--device", self._device]
+
+        log.debug("Run " + " ".join(cmd))
+        scanimage = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout, stderr = await scanimage.communicate()
+
+        if scanimage.returncode != 0:
+            log.error(f"scanimage failed with {scanimage.return_code}: {stderr}")
+        else:
+            with wand.image.Image(blob=stdout, resolution=RESOLUTION) as page:
+                self._document.sequence.append(page)
+
+    def _save_document(self):
+        filename = f"SCAN_{datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')}.pdf"
+        log.info(f"Saving {len(self._document.sequence)} pages to {filename}")
+        self._document.save(filename=os.path.join(self._output_dir, filename))
+        self._document.clear()
+
+    async def _scan_last_page(self):
+        await self._scan_page()
+        self._save_document()
+
+    async def _scan_multipage(self):
+        await self._scan_page()
+        log.info(f"Buffered {len(self._document.sequence)} pages")
+
+    async def _finish_multipage(self):
+        # when the device sends us an event it expects us to do some scanning.
+        # otherwise it won't clear the display for quite some time.
+        await self._scan_page(dummy=True)
+        self._save_document()
+
+    async def _abort_multipage(self):
+        # when the device sends us an event it expects us to do some scanning.
+        # otherwise it won't clear the display for quite some time.
+        await self._scan_page(dummy=True)
+        log.info(f"Discarding {len(self._document.sequence)} pages")
+        self._document.clear()
+
+
+class ScannerProtocol(asyncio.DatagramProtocol):
+    def __init__(self, scanner: Scanner):
+        asyncio.DatagramProtocol.__init__(self)
+        self._scanner = scanner
+        self._last_seq = None
+
+    def datagram_received(self, data, addr):
+        if len(data) < 4 or data[0] != 2 or data[1] != 0 or data[3] != 0x30:
+            log.warning("dropping unknown UDP data")
+            return None
+        msg = data[4:].decode("utf-8")
+
+        log.debug(f"Received UDP packet: {msg}")
+
+        appnum = seq = None
+        for item in msg.split(";"):
+            item = item.split("=", 1)
+            if len(item) != 2:
+                continue
+            key, val = item
+            if key == "APPNUM":
+                appnum = int(val) if val.isdecimal() else None
+            if key == "SEQ":
+                seq = int(val) if val.isdecimal() else None
+
+        if seq is None:
+            log.warning("dropping UDP packet with no or invalid SEQ")
+            return None
+        if seq == self._last_seq:
+            # the printer sends everything twice, silently discard duplicates
+            log.debug("dropping UDP packet with duplicated SEQ")
+            return None
+        self._last_seq = seq
+
+        if appnum is None or appnum < 1 or appnum > 4:
+            log.warning("dropping UDP packet with no or invalid APPNUM")
+            return None
+
+        self._scanner.enqueue(appnum)
 
 
 async def advertise(scanner_addr: str, host: str):
@@ -74,8 +208,16 @@ async def advertise(scanner_addr: str, host: str):
 
 
 async def main(args: argparse.Namespace):
+    scanner = Scanner(args.output_dir, args.device)
     try:
-        await advertise(args.scanner_addr, host=args.advertised_host or args.listen_addr)
+        await asyncio.gather(
+            scanner.process(),
+            asyncio.get_event_loop().create_datagram_endpoint(
+                lambda: ScannerProtocol(scanner),
+                local_addr=(args.listen_addr, COMMAND_UDP_PORT),
+            ),
+            advertise(args.scanner_addr, host=args.advertised_host or args.listen_addr),
+        )
     except asyncio.exceptions.CancelledError:
         pass
 
