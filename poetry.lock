@@ -241,6 +241,17 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.4)", "pytest-
 type = ["mypy (>=1.14.1)"]
 
 [[package]]
+name = "pyasn1"
+version = "0.6.1"
+description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyasn1-0.6.1-py3-none-any.whl", hash = "sha256:0d632f46f2ba09143da3a8afe9e33fb6f92fa2320ab7e886e2d0f7672af84629"},
+    {file = "pyasn1-0.6.1.tar.gz", hash = "sha256:6f580d2bdd84365380830acf45550f2511469f673cb4a5ae3857a3170128b034"},
+]
+
+[[package]]
 name = "pycodestyle"
 version = "2.13.0"
 description = "Python style guide checker"
@@ -287,6 +298,23 @@ spelling = ["pyenchant (>=3.2,<4.0)"]
 testutils = ["gitpython (>3)"]
 
 [[package]]
+name = "pysnmp"
+version = "7.1.20"
+description = "A Python library for SNMP"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pysnmp-7.1.20-py3-none-any.whl", hash = "sha256:9d7251e0cdf5f604abe53a65821da30ab3788a2320c883e7edb46d0f43007e3a"},
+    {file = "pysnmp-7.1.20.tar.gz", hash = "sha256:1a74f072eaa43725f348d82710a0e4f8854f85597d9a545fdae3929147bae502"},
+]
+
+[package.dependencies]
+pyasn1 = ">=0.4.8,<0.5.0 || >0.5.0"
+
+[package.extras]
+dev = ["Sphinx (>=7.0.0,<8.0.0)", "bump2version (>=1.0.1)", "codecov (>=2.1.12)", "cryptography (>=43.0.1)", "doc8 (>=1.0.0)", "flake8 (>=7.0.0)", "furo (>=2023.1.1)", "pep8-naming (>=0.14.1)", "pre-commit (==2.21.0)", "pysmi (>=1.6.1)", "pytest (>=7.2.0)", "pytest-asyncio (>=0.21.1)", "pytest-codecov (>=0.4.0)", "pytest-cov (>=4.1.0)", "ruff (>=0.11.7)", "sphinx-copybutton (>=0.5.2)", "sphinx-notfound-page (>=1.0.0)", "sphinx-polyversion (>=1.0.0)", "sphinx-sitemap-lextudio (>=2.5.2)"]
+
+[[package]]
 name = "tomlkit"
 version = "0.13.2"
 description = "Style preserving TOML library"
@@ -300,4 +328,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12"
-content-hash = "60cba31cddcd07283bedff51e8a68a5cd963994dcd84eee1f3d0339752a3e4c4"
+content-hash = "727655129d7ea4d8de83839c86fab2f403ffbcd369b1c9e7bfea973fda0c1e6c"
