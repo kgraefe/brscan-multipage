@@ -51,6 +51,13 @@ class Scanner:
                     log.warning(f"Ignoring unknown appnum {appnum}")
 
     async def _scan_page(self, dummy: bool = False):
+        # scanimage failed on my Brother DCP-7070DW when invoking it too fast
+        # after receiving the first event. Hence we need to add a little sleep
+        # here. Maybe we could wait for the second event but that defeats the
+        # purpose of sending it twice (in case one is lost). 1 second was
+        # sufficient when I observed it.
+        await asyncio.sleep(1)
+
         # fmt: off
         cmd = [
             "scanimage",
