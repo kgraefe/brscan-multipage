@@ -41,6 +41,7 @@ It uses the following environment variables:
 - `USERMAP_UID` and `USERMAP_GID` (optional, root containers only): user and
   group mapping to fix file permissions
 - `TZ` (optional): the local timezone for proper timestamps in the filenames
+- `LOGLEVEL` (optional): `error`, `warning`, `info` (default) or `debug`
 
 It exposes the UDP port `54925` which *must be mapped to the very same port* on
 the host. Otherwise the scanner won't reach the container when a menu entry is
@@ -59,6 +60,7 @@ $ docker run \
     --env "USERMAP_UID=$(id -u)" \
     --env "USERMAP_GID=$(id -g)" \
     --env "TZ=Europe/Berlin" \
+    --env "LOGLEVEL=info" \
     --publish "54925:54925/UDP" \
     --volume "$PWD/output:/output"
     kgraefe/brscan-multipage:latest
@@ -81,6 +83,7 @@ services:
       USERMAP_UID: 1000
       USERMAP_GID: 1000
       TZ: Europe/Berlin
+      LOGLEVEL: info
     volumes:
       - /wherever/paperless/consume:/output
     restart: unless-stopped

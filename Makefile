@@ -12,6 +12,7 @@ run: build
 		--env "SCANNER_MODEL=$(SCANNER_MODEL)" \
 		--env "SCANNER_IP=$(SCANNER_IP)" \
 		--env "HOST_IP=$(HOST_IP)" \
+		--env "LOGLEVEL=debug" \
 		--publish "54925:54925/UDP" \
 		--volume "$(PWD)/output:/output" \
 		kgraefe/brscan-multipage:latest
