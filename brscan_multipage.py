@@ -5,7 +5,7 @@ import asyncio
 import datetime
 import argparse
 import colorlog
-import wand.image
+import img2pdf
 import pysnmp.hlapi.v1arch.asyncio as snmp
 
 SNMP_UDP_PORT: int = 161
@@ -19,7 +19,7 @@ log = colorlog.getLogger("brscan_multipage")
 class Scanner:
     def __init__(self, output_dir: str | os.PathLike, device: str | None):
         self._queue = asyncio.Queue(maxsize=10)
-        self._document = wand.image.Image()
+        self._pages = []
         self._output_dir = output_dir
         self._device = device
 
@@ -76,14 +76,14 @@ class Scanner:
         if scanimage.returncode != 0:
             log.error(f"scanimage failed with {scanimage.return_code}: {stderr}")
         else:
-            with wand.image.Image(blob=stdout, resolution=RESOLUTION) as page:
-                self._document.sequence.append(page)
+            self._pages.append(stdout)
 
     def _save_document(self):
         filename = f"SCAN_{datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')}.pdf"
-        log.info(f"Saving {len(self._document.sequence)} pages to {filename}")
-        self._document.save(filename=os.path.join(self._output_dir, filename))
-        self._document.clear()
+        log.info(f"Saving {len(self._pages)} pages to {filename}")
+        with open(os.path.join(self._output_dir, filename), "wb") as f:
+            f.write(img2pdf.convert(self._pages))
+        self._pages = []
 
     async def _scan_last_page(self):
         await self._scan_page()
@@ -91,7 +91,7 @@ class Scanner:
 
     async def _scan_multipage(self):
         await self._scan_page()
-        log.info(f"Buffered {len(self._document.sequence)} pages")
+        log.info(f"Buffered {len(self._pages)} pages")
 
     async def _finish_multipage(self):
         # when the device sends us an event it expects us to do some scanning.
@@ -103,8 +103,8 @@ class Scanner:
         # when the device sends us an event it expects us to do some scanning.
         # otherwise it won't clear the display for quite some time.
         await self._scan_page(dummy=True)
-        log.info(f"Discarding {len(self._document.sequence)} pages")
-        self._document.clear()
+        log.info(f"Discarding {len(self._pages)} pages")
+        self._pages = []
 
 
 class ScannerProtocol(asyncio.DatagramProtocol):
