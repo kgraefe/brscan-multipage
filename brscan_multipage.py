@@ -50,13 +50,15 @@ class Scanner:
                 case _:
                     log.warning(f"Ignoring unknown appnum {appnum}")
 
-    async def _scan_page(self, dummy: bool = False):
+    async def _scan_page(self, dummy: bool = False, retry: bool = False):
         # scanimage failed on my Brother DCP-7070DW when invoking it too fast
         # after receiving the first event. Hence we need to add a little sleep
         # here. Maybe we could wait for the second event but that defeats the
-        # purpose of sending it twice (in case one is lost). 1 second was
-        # sufficient when I observed it.
-        await asyncio.sleep(1)
+        # purpose of sending it twice (in case one is lost). In my observation
+        # 1 second were sufficient most of the time but sometimes not.
+        # Therefore we retry once on failure.
+        if not retry:
+            await asyncio.sleep(1)
 
         # fmt: off
         cmd = [
@@ -81,8 +83,12 @@ class Scanner:
         stdout, stderr = await scanimage.communicate()
 
         if scanimage.returncode != 0:
-            stderr = stderr.decode(errors="replace")
-            log.error(f"scanimage failed with {scanimage.returncode}: {stderr}")
+            stderr = stderr.decode(errors="replace").strip()
+            if retry:
+                log.error(f"scanimage failed with {scanimage.returncode}: {stderr}")
+            else:
+                log.warning(f"Retrying as scanimage failed with {scanimage.returncode}: {stderr}")
+                await self._scan_page(dummy, retry=True)
         else:
             self._pages.append(stdout)
 
