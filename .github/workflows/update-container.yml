@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get base image
-        run: awk '/^FROM / {print "BASEIMAGE=" $2}' containers/Dockerfile >>"$GITHUB_ENV"
+        run: awk '/^FROM / {print "BASEIMAGE=" $2; exit}' containers/Dockerfile >>"$GITHUB_ENV"
         if: ${{ github.event_name == 'schedule' }}
 
       - name: Login to Docker Hub
