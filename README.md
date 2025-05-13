@@ -7,12 +7,12 @@ document scanning only. The main feature is that it offers scanning multi-page
 documents. It does that by offering 4 functions and keeping a stack of pages
 internally:
 
-1. Last page: Scan one page, add it to the stack and save the stack as PDF.
-   This also serves for scanning single-page documents.
-2. Multipage: Scan one page and add it to the stack.
-3. Finish MP: Save the stack as PDF.
-4. Abort MP: Clear the stack without saving. Discards all pages that have been
-   scanned before.
+1. Scan page: Scan one page and add it to the internal stack.
+2. Scan&Finish: Scan one page, add it to the internal stack and save the stack
+   as PDF.
+3. Finish doc: Save the stack as PDF.
+4. Discard doc: Clear the stack without saving. Discards all pages that have
+   been scanned before.
 
 Whenever the stack is saved as PDF it is also cleared.
 

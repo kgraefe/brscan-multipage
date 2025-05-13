@@ -36,17 +36,30 @@ class Scanner:
             # appnum must match the appnum in the advertisement (array index + 1)
             match appnum:
                 case 1:
-                    log.info("Scanning multi page")
-                    await self._scan_multipage()
+                    log.info("Scan page ...")
+                    await self._scan_page()
+                    log.info(f"Buffered {len(self._pages)} pages")
+
                 case 2:
-                    log.info("Scanning last page")
-                    await self._scan_last_page()
+                    log.info("Scan page and finish document ...")
+                    await self._scan_page()
+                    self._save_document()
+
                 case 3:
-                    log.info("Finishing multi page")
-                    await self._finish_multipage()
+                    log.info("Finish document ...")
+                    # when the device sends us an event it expects us to do some scanning.
+                    # otherwise it won't clear the display for quite some time.
+                    await self._scan_page(dummy=True)
+                    self._save_document()
+
                 case 4:
-                    log.info("Aborting multi page")
-                    await self._abort_multipage()
+                    log.info("Discard document ...")
+                    # when the device sends us an event it expects us to do some scanning.
+                    # otherwise it won't clear the display for quite some time.
+                    await self._scan_page(dummy=True)
+                    log.info(f"Discarding {len(self._pages)} pages")
+                    self._pages = []
+
                 case _:
                     log.warning(f"Ignoring unknown appnum {appnum}")
 
@@ -87,7 +100,9 @@ class Scanner:
             if retry:
                 log.error(f"scanimage failed with {scanimage.returncode}: {stderr}")
             else:
-                log.warning(f"Retrying as scanimage failed with {scanimage.returncode}: {stderr}")
+                log.warning(
+                    f"Retrying as scanimage failed with {scanimage.returncode}: {stderr}"
+                )
                 await self._scan_page(dummy, retry=True)
         else:
             self._pages.append(stdout)
@@ -97,27 +112,6 @@ class Scanner:
         log.info(f"Saving {len(self._pages)} pages to {filename}")
         with open(os.path.join(self._output_dir, filename), "wb") as f:
             f.write(img2pdf.convert(self._pages))
-        self._pages = []
-
-    async def _scan_last_page(self):
-        await self._scan_page()
-        self._save_document()
-
-    async def _scan_multipage(self):
-        await self._scan_page()
-        log.info(f"Buffered {len(self._pages)} pages")
-
-    async def _finish_multipage(self):
-        # when the device sends us an event it expects us to do some scanning.
-        # otherwise it won't clear the display for quite some time.
-        await self._scan_page(dummy=True)
-        self._save_document()
-
-    async def _abort_multipage(self):
-        # when the device sends us an event it expects us to do some scanning.
-        # otherwise it won't clear the display for quite some time.
-        await self._scan_page(dummy=True)
-        log.info(f"Discarding {len(self._pages)} pages")
         self._pages = []
 
 
@@ -171,10 +165,10 @@ async def advertise(scanner_addr: str, host: str):
 
             for idx, function in enumerate(
                 [
-                    "Multipage",
-                    "Last page",
-                    "Finish MP",
-                    "Abort MP",
+                    "Scan page",
+                    "Scan&Finish",
+                    "Finish doc",
+                    "Discard doc",
                 ]
             ):
                 appnum = idx + 1
