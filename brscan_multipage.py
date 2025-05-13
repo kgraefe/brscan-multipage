@@ -74,6 +74,7 @@ class Scanner:
         stdout, stderr = await scanimage.communicate()
 
         if scanimage.returncode != 0:
+            stderr = stderr.decode(errors="replace")
             log.error(f"scanimage failed with {scanimage.returncode}: {stderr}")
         else:
             self._pages.append(stdout)
