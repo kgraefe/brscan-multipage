@@ -3,13 +3,24 @@ MAINTAINER Konrad Vité, kv@paktolos.net
 
 FROM base AS builder
 
+RUN apt-get update -q \
+    && apt-get install -q -y --no-install-recommends \
+        patch
+
 ENV POETRY_VIRTUALENVS_CREATE=false
 
 RUN pip install --root-user-action=ignore poetry==2.1.3
 
 # install dependencies
-COPY --from=projectroot pyproject.toml poetry.lock .
-RUN poetry install --no-root --only main
+COPY --from=projectroot \
+    pyproject.toml \
+    poetry.lock \
+    containers/patches/pysnmp/0001-v1arch-set-next-bulk-_cmd-Implement-timeout-handling.patch \
+    .
+
+RUN poetry install --no-root --only main \
+    && cd "$(pip show pysnmp | sed 's/^Location: //p;d')/pysnmp" \
+    && patch -p2 < /0001-v1arch-set-next-bulk-_cmd-Implement-timeout-handling.patch
 
 FROM base
 
