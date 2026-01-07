@@ -47,15 +47,17 @@ class Scanner:
 
                 case 3:
                     log.info("Finish document ...")
-                    # when the device sends us an event it expects us to do some scanning.
-                    # otherwise it won't clear the display for quite some time.
+                    # when the device sends us an event it expects us to do
+                    # some scanning. otherwise it won't clear the display for
+                    # quite some time.
                     await self._scan_page(dummy=True)
                     self._save_document()
 
                 case 4:
                     log.info("Discard document ...")
-                    # when the device sends us an event it expects us to do some scanning.
-                    # otherwise it won't clear the display for quite some time.
+                    # when the device sends us an event it expects us to do
+                    # some scanning. otherwise it won't clear the display for
+                    # quite some time.
                     await self._scan_page(dummy=True)
                     log.info(f"Discarding {len(self._pages)} pages")
                     self._pages = []
@@ -101,7 +103,8 @@ class Scanner:
                 log.error(f"scanimage failed with {scanimage.returncode}: {stderr}")
             else:
                 log.warning(
-                    f"Retrying as scanimage failed with {scanimage.returncode}: {stderr}"
+                    f"Retrying as scanimage failed with {scanimage.returncode}:"
+                    f" {stderr}"
                 )
                 await self._scan_page(dummy, retry=True)
         else:
