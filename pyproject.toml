@@ -8,11 +8,11 @@ authors = [
 
 [tool.poetry.dependencies]
 python = ">=3.12"
-colorlog = "^6.9.0"
-pysnmp = "^7.1.20"
-img2pdf = "^0.6.1"
+colorlog = "^6.10.1"
+pysnmp = "^7.1.22"
+img2pdf = "^0.6.3"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "*"
 black = "*"
-flake8-bugbear = "^24.12.12"
+flake8-bugbear = "^25.11.29"
