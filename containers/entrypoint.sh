@@ -29,8 +29,10 @@ map_uidgid() {
 map_uidgid
 
 # Ensure /output is available and writeable
-mkdir -p /output
-chown "brscan:brscan" /output
+if [ ! -d /output ]; then
+    mkdir -p /output
+    chown "brscan:brscan" /output
+fi
 
 # Drop root and run CMD
 exec gosu brscan:brscan "$@"
