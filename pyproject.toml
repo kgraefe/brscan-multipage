@@ -9,7 +9,7 @@ authors = [
 [tool.poetry.dependencies]
 python = ">=3.12"
 colorlog = "^6.10.1"
-pysnmp = "^7.1.22"
+pysnmp = "^7.1.23"
 img2pdf = "^0.6.3"
 
 [tool.poetry.group.dev.dependencies]
