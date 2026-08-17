@@ -107,7 +107,7 @@ class Scanner:
                     f" {stderr}"
                 )
                 await self._scan_page(dummy, retry=True)
-        else:
+        elif not dummy:
             self._pages.append(stdout)
 
     def _save_document(self):
