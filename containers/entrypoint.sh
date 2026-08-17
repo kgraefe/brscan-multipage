@@ -4,9 +4,6 @@ set -eux
 
 # Install scanner
 brsaneconfig4 -a name="Brother" model="$SCANNER_MODEL" ip="$SCANNER_IP"
-#
-# Ensure /output is available 
-mkdir -p /output
 
 if [ "$(id -u)" != 0 ]; then
     # running in a rootless container, don't bother with permissions.
