@@ -208,7 +208,11 @@ async def advertise(scanner_addr: str, host: str):
                 if error_indication:
                     log.error(f"SNMP SET failed: {error_indication}")
                 elif error_status:
-                    location = error_index and var_binds[int(error_index) - 1] or "?"
+                    location = (
+                        var_binds[int(error_index) - 1]
+                        if error_index and int(error_index) <= len(var_binds)
+                        else "?"
+                    )
                     log.error(
                         f"SNMP SET failed: {error_status.prettyPrint()} at {location}"
                     )
