@@ -27,7 +27,7 @@ class Scanner:
         try:
             self._queue.put_nowait(appnum)
         except asyncio.QueueFull as e:
-            self.warning(f"Dropping appnum command {appnum}: {e}")
+            log.warning(f"Dropping appnum command {appnum}: {e}")
 
     async def process(self):
         while True:
